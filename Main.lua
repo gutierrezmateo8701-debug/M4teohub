@@ -1,4 +1,4 @@
---[==[ [Mateo Hub - Dropdown & Layout Fix Engine] ]==]
+--[==[ [Mateo Hub - Final UI Fix Engine] ]==]
 local _ENV = (getgenv or function() return _G end)()
 local _U = {
     [1] = "\83\99\114\101\101\110\71\117\105",
@@ -210,13 +210,6 @@ function _M:CrearTab(tn)
         TP.CanvasSize = UDim2.new(0, 0, 0, PL.AbsoluteContentSize.Y + 15)
     end)
     
-    TB.MouseEnter:Connect(function()
-        if TB.TextColor3 ~= s._CurrTheme.Accent then Tween(TB, {0.2}, {BackgroundColor3 = s._CurrTheme.Hover}) end
-    end)
-    TB.MouseLeave:Connect(function()
-        if TB.TextColor3 ~= s._CurrTheme.Accent then Tween(TB, {0.2}, {BackgroundColor3 = s._CurrTheme.Secondary}) end
-    end)
-    
     TB.MouseButton1Click:Connect(function()
         for _, p in ipairs(s.PCContainer:GetChildren()) do if p:IsA(_D(6)) then p.Visible = false end end
         for _, b in ipairs(s.TH:GetChildren()) do if b:IsA(_D(7)) then Tween(b, {0.2}, {TextColor3 = Color3.fromRGB(160, 160, 160), BackgroundColor3 = s._CurrTheme.Secondary}) end end
@@ -243,9 +236,6 @@ function _M:CrearTab(tn)
         b.TextXAlignment = Enum.TextXAlignment.Left
         b.Parent = TP
         Instance.new(_D(8), b).CornerRadius = UDim.new(0, 6)
-        
-        b.MouseEnter:Connect(function() Tween(b, {0.2}, {BackgroundColor3 = s._CurrTheme.Hover}) end)
-        b.MouseLeave:Connect(function() Tween(b, {0.2}, {BackgroundColor3 = s._CurrTheme.Secondary}) end)
         b.MouseButton1Click:Connect(function() if cb then pcall(cb) end end)
     end
     
@@ -273,69 +263,6 @@ function _M:CrearTab(tn)
             Tween(ind, {0.2}, {BackgroundColor3 = tg and s._CurrTheme.Accent or Color3.fromRGB(50, 50, 60)})
             pcall(cb, tg)
         end)
-    end
-    
-    function El:AddSlider(txt, min, max, cb)
-        local sl = Instance.new(_D(4))
-        sl.Size = UDim2.new(1, -6, 0, 42)
-        sl.BackgroundColor3 = s._CurrTheme.Secondary
-        sl.Parent = TP
-        Instance.new(_D(8), sl).CornerRadius = UDim.new(0, 6)
-        
-        local lb = Instance.new(_D(5), sl)
-        lb.Size = UDim2.new(1, -8, 0, 18)
-        lb.Position = UDim2.new(0, 5, 0, 3)
-        lb.BackgroundTransparency = 1
-        lb.Font = Enum.Font.Gotham
-        lb.Text = " " .. txt .. ": " .. tostring(min)
-        lb.TextColor3 = Color3.fromRGB(220, 220, 220)
-        lb.TextSize = 10
-        lb.TextXAlignment = Enum.TextXAlignment.Left
-        
-        local br = Instance.new(_D(4), sl)
-        br.Size = UDim2.new(1, -14, 0, 5)
-        br.Position = UDim2.new(0, 7, 0, 26)
-        br.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
-        Instance.new(_D(8), br).CornerRadius = UDim.new(1, 0)
-        
-        local fl = Instance.new(_D(4), br)
-        fl.Size = UDim2.new(0, 0, 1, 0)
-        fl.BackgroundColor3 = s._CurrTheme.Accent
-        Instance.new(_D(8), fl).CornerRadius = UDim.new(1, 0)
-        
-        local dr = false
-        br.InputBegan:Connect(function(io) if io.UserInputType == Enum.UserInputType.MouseButton1 or io.UserInputType == Enum.UserInputType.Touch then dr = true end end)
-        game:GetService("UserInputService").InputEnded:Connect(function(io) if io.UserInputType == Enum.UserInputType.MouseButton1 or io.UserInputType == Enum.UserInputType.Touch then dr = false end end)
-        game:GetService("UserInputService").InputChanged:Connect(function(io)
-            if dr and (io.UserInputType == Enum.UserInputType.MouseMovement or io.UserInputType == Enum.UserInputType.Touch) then
-                local ps = math.clamp((io.Position.X - br.AbsolutePosition.X) / br.AbsoluteSize.X, 0, 1)
-                fl.Size = UDim2.new(ps, 0, 1, 0)
-                local vl = math.floor(min + ((max - min) * ps))
-                lb.Text = " " .. txt .. ": " .. tostring(vl)
-                pcall(cb, vl)
-            end
-        end)
-    end
-    
-    function El:AddTextbox(txt, ph, cb)
-        local bx = Instance.new(_D(4))
-        bx.Size = UDim2.new(1, -6, 0, 30)
-        bx.BackgroundColor3 = s._CurrTheme.Secondary
-        bx.Parent = TP
-        Instance.new(_D(8), bx).CornerRadius = UDim.new(0, 6)
-        
-        local inp = Instance.new("TextBox", bx)
-        inp.Size = UDim2.new(1, -10, 1, 0)
-        inp.Position = UDim2.new(0, 5, 0, 0)
-        inp.BackgroundTransparency = 1
-        inp.Font = Enum.Font.Gotham
-        inp.PlaceholderText = ph or txt
-        inp.Text = ""
-        inp.TextColor3 = Color3.fromRGB(255, 255, 255)
-        inp.TextSize = 10
-        inp.TextXAlignment = Enum.TextXAlignment.Left
-        
-        inp.FocusLost:Connect(function(ep) if ep then pcall(cb, inp.Text) end end)
     end
     
     function El:AddLabel(txt)

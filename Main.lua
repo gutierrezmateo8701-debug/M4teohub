@@ -1,11 +1,11 @@
---[==[ [Mateo Hub - Dropdown & Animated Engine] ]==]
+--[==[ [Mateo Hub - Dropdown & Layout Fix Engine] ]==]
 local _ENV = (getgenv or function() return _G end)()
 local _U = {
     [1] = "\83\99\114\101\101\110\71\117\105",
     [2] = "\67\111\114\101\71\117\105",
     [3] = "\80\108\97\121\101\114\71\117\105",
     [4] = "\70\114\97\109\101",
-    [5] = "\84\101\120\116\76\97\98\101\108",
+    [5] = "\84\101\120\116\76\97\98\101\10l",
     [6] = "\83\99\114\111\108\108\105\110\103\70\114\97\109\101",
     [7] = "\84\101\120\116\66\117\116\116\111\110",
     [8] = "\85\73\67\111\114\110\101\114"
@@ -131,8 +131,6 @@ function _M:CrearWindow(cfg)
         closeBtn.TextSize = 9
         Instance.new(_D(8), closeBtn).CornerRadius = UDim.new(1, 0)
         
-        closeBtn.MouseEnter:Connect(function() Tween(closeBtn, {0.2}, {BackgroundColor3 = Color3.fromRGB(255, 80, 80)}) end)
-        closeBtn.MouseLeave:Connect(function() Tween(closeBtn, {0.2}, {BackgroundColor3 = Color3.fromRGB(200, 50, 50)}) end)
         closeBtn.MouseButton1Click:Connect(function()
             Tween(s.MF, {0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In}, {Size = UDim2.new(0, 0, 0, 0)})
             task.wait(0.2)
@@ -149,9 +147,6 @@ function _M:CrearWindow(cfg)
         minBtn.Font = Enum.Font.GothamBold
         minBtn.TextSize = 11
         Instance.new(_D(8), minBtn).CornerRadius = UDim.new(1, 0)
-        
-        minBtn.MouseEnter:Connect(function() Tween(minBtn, {0.2}, {BackgroundColor3 = Color3.fromRGB(255, 180, 80)}) end)
-        minBtn.MouseLeave:Connect(function() Tween(minBtn, {0.2}, {BackgroundColor3 = Color3.fromRGB(220, 150, 50)}) end)
         
         minBtn.MouseButton1Click:Connect(function()
             minimized = not minimized
@@ -178,65 +173,7 @@ function _M:CrearWindow(cfg)
         s.PCContainer.BackgroundTransparency = 1
     end
     
-    if s._KS == "Si" then
-        local KG = Instance.new(_D(1))
-        pcall(function() KG.Parent = CG end)
-        if not KG.Parent then KG.Parent = LP:WaitForChild(_D(3)) end
-        
-        local KF = Instance.new(_D(4), KG)
-        KF.Size = UDim2.new(0, 280, 0, 150)
-        KF.Position = UDim2.new(0.5, -140, 0.5, -75)
-        KF.BackgroundColor3 = s._CurrTheme.Main
-        Instance.new(_D(8), KF).CornerRadius = UDim.new(0, 8)
-        
-        local kStroke = Instance.new("UIStroke", KF)
-        kStroke.Thickness = 2
-        kStroke.Color = s._CurrTheme.Accent
-        
-        local kTitle = Instance.new(_D(5), KF)
-        kTitle.Size = UDim2.new(1, -20, 0, 25)
-        kTitle.Position = UDim2.new(0, 10, 0, 8)
-        kTitle.BackgroundTransparency = 1
-        kTitle.Font = Enum.Font.GothamBold
-        kTitle.Text = s._N .. " - Key System"
-        kTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-        kTitle.TextSize = 13
-        kTitle.TextXAlignment = Enum.TextXAlignment.Center
-        
-        local KB = Instance.new("TextBox", KF)
-        KB.Size = UDim2.new(0.85, 0, 0, 30)
-        KB.Position = UDim2.new(0.075, 0, 0.38, 0)
-        KB.PlaceholderText = "Ingresa tu key..."
-        KB.Text = ""
-        KB.BackgroundColor3 = s._CurrTheme.Secondary
-        KB.TextColor3 = Color3.fromRGB(255, 255, 255)
-        KB.Font = Enum.Font.Gotham
-        KB.TextSize = 11
-        Instance.new(_D(8), KB).CornerRadius = UDim.new(0, 6)
-        
-        local BT = Instance.new(_D(7), KF)
-        BT.Size = UDim2.new(0.85, 0, 0, 30)
-        BT.Position = UDim2.new(0.075, 0, 0.68, 0)
-        BT.Text = "Verificar Key"
-        BT.BackgroundColor3 = s._CurrTheme.Accent
-        BT.TextColor3 = Color3.fromRGB(255, 255, 255)
-        BT.Font = Enum.Font.GothamBold
-        BT.TextSize = 11
-        Instance.new(_D(8), BT).CornerRadius = UDim.new(0, 6)
-        
-        BT.MouseButton1Click:Connect(function()
-            if KB.Text == s._K or s._K == "" then
-                KG:Destroy()
-                _Build()
-            else
-                KB.Text = ""
-                KB.PlaceholderText = "¡Key Incorrecta!"
-            end
-        end)
-    else
-        _Build()
-    end
-    
+    _Build()
     return s
 end
 
@@ -266,33 +203,23 @@ function _M:CrearTab(tn)
     TP.Parent = s.PCContainer
     
     local PL = Instance.new("UIListLayout")
-    PL.Padding = UDim.new(0, 5)
+    PL.Padding = UDim.new(0, 6)
     PL.Parent = TP
     
     PL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        TP.CanvasSize = UDim2.new(0, 0, 0, PL.AbsoluteContentSize.Y + 10)
+        TP.CanvasSize = UDim2.new(0, 0, 0, PL.AbsoluteContentSize.Y + 15)
     end)
     
     TB.MouseEnter:Connect(function()
-        if TB.TextColor3 ~= s._CurrTheme.Accent then
-            Tween(TB, {0.2}, {BackgroundColor3 = s._CurrTheme.Hover})
-        end
+        if TB.TextColor3 ~= s._CurrTheme.Accent then Tween(TB, {0.2}, {BackgroundColor3 = s._CurrTheme.Hover}) end
     end)
     TB.MouseLeave:Connect(function()
-        if TB.TextColor3 ~= s._CurrTheme.Accent then
-            Tween(TB, {0.2}, {BackgroundColor3 = s._CurrTheme.Secondary})
-        end
+        if TB.TextColor3 ~= s._CurrTheme.Accent then Tween(TB, {0.2}, {BackgroundColor3 = s._CurrTheme.Secondary}) end
     end)
     
     TB.MouseButton1Click:Connect(function()
-        for _, p in ipairs(s.PCContainer:GetChildren()) do
-            if p:IsA(_D(6)) then p.Visible = false end
-        end
-        for _, b in ipairs(s.TH:GetChildren()) do
-            if b:IsA(_D(7)) then 
-                Tween(b, {0.2}, {TextColor3 = Color3.fromRGB(160, 160, 160), BackgroundColor3 = s._CurrTheme.Secondary}) 
-            end
-        end
+        for _, p in ipairs(s.PCContainer:GetChildren()) do if p:IsA(_D(6)) then p.Visible = false end end
+        for _, b in ipairs(s.TH:GetChildren()) do if b:IsA(_D(7)) then Tween(b, {0.2}, {TextColor3 = Color3.fromRGB(160, 160, 160), BackgroundColor3 = s._CurrTheme.Secondary}) end end
         TP.Visible = true
         Tween(TB, {0.2}, {TextColor3 = s._CurrTheme.Accent, BackgroundColor3 = s._CurrTheme.Hover})
     end)
@@ -319,11 +246,7 @@ function _M:CrearTab(tn)
         
         b.MouseEnter:Connect(function() Tween(b, {0.2}, {BackgroundColor3 = s._CurrTheme.Hover}) end)
         b.MouseLeave:Connect(function() Tween(b, {0.2}, {BackgroundColor3 = s._CurrTheme.Secondary}) end)
-        b.MouseButton1Down:Connect(function() Tween(b, {0.1}, {Size = UDim2.new(1, -10, 0, 28)}) end)
-        b.MouseButton1Up:Connect(function() 
-            Tween(b, {0.1}, {Size = UDim2.new(1, -6, 0, 30)})
-            if cb then pcall(cb) end
-        end)
+        b.MouseButton1Click:Connect(function() if cb then pcall(cb) end end)
     end
     
     function El:AddToggle(txt, cb)
@@ -344,9 +267,6 @@ function _M:CrearTab(tn)
         ind.Position = UDim2.new(1, -22, 0.5, -8)
         ind.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
         Instance.new(_D(8), ind).CornerRadius = UDim.new(1, 0)
-        
-        b.MouseEnter:Connect(function() Tween(b, {0.2}, {BackgroundColor3 = s._CurrTheme.Hover}) end)
-        b.MouseLeave:Connect(function() Tween(b, {0.2}, {BackgroundColor3 = s._CurrTheme.Secondary}) end)
         
         b.MouseButton1Click:Connect(function()
             tg = not tg
@@ -384,12 +304,8 @@ function _M:CrearTab(tn)
         Instance.new(_D(8), fl).CornerRadius = UDim.new(1, 0)
         
         local dr = false
-        br.InputBegan:Connect(function(io)
-            if io.UserInputType == Enum.UserInputType.MouseButton1 or io.UserInputType == Enum.UserInputType.Touch then dr = true end
-        end)
-        game:GetService("UserInputService").InputEnded:Connect(function(io)
-            if io.UserInputType == Enum.UserInputType.MouseButton1 or io.UserInputType == Enum.UserInputType.Touch then dr = false end
-        end)
+        br.InputBegan:Connect(function(io) if io.UserInputType == Enum.UserInputType.MouseButton1 or io.UserInputType == Enum.UserInputType.Touch then dr = true end end)
+        game:GetService("UserInputService").InputEnded:Connect(function(io) if io.UserInputType == Enum.UserInputType.MouseButton1 or io.UserInputType == Enum.UserInputType.Touch then dr = false end end)
         game:GetService("UserInputService").InputChanged:Connect(function(io)
             if dr and (io.UserInputType == Enum.UserInputType.MouseMovement or io.UserInputType == Enum.UserInputType.Touch) then
                 local ps = math.clamp((io.Position.X - br.AbsolutePosition.X) / br.AbsoluteSize.X, 0, 1)
@@ -416,21 +332,15 @@ function _M:CrearTab(tn)
         inp.PlaceholderText = ph or txt
         inp.Text = ""
         inp.TextColor3 = Color3.fromRGB(255, 255, 255)
-        inp.PlaceholderColor3 = Color3.fromRGB(120, 120, 120)
         inp.TextSize = 10
         inp.TextXAlignment = Enum.TextXAlignment.Left
         
-        bx.MouseEnter:Connect(function() Tween(bx, {0.2}, {BackgroundColor3 = s._CurrTheme.Hover}) end)
-        bx.MouseLeave:Connect(function() Tween(bx, {0.2}, {BackgroundColor3 = s._CurrTheme.Secondary}) end)
-        
-        inp.FocusLost:Connect(function(ep)
-            if ep then pcall(cb, inp.Text) end
-        end)
+        inp.FocusLost:Connect(function(ep) if ep then pcall(cb, inp.Text) end end)
     end
     
     function El:AddLabel(txt)
         local lbl = Instance.new(_D(5))
-        lbl.Size = UDim2.new(1, -6, 0, 24)
+        lbl.Size = UDim2.new(1, -6, 0, 20)
         lbl.BackgroundTransparency = 1
         lbl.Font = Enum.Font.GothamMedium
         lbl.Text = " " .. txt
@@ -441,7 +351,6 @@ function _M:CrearTab(tn)
         return lbl
     end
 
-    -- NUEVA FUNCIÓN: Dropdown (Para listar jugadores, objetos o selecciones dinámicamente)
     function El:AddDropdown(txt, list, cb)
         local open = false
         local dropFrame = Instance.new(_D(4))
@@ -464,7 +373,6 @@ function _M:CrearTab(tn)
         listLayout.Padding = UDim.new(0, 2)
         listLayout.Parent = dropFrame
         
-        -- Altura base del botón + elementos futuros
         local function updateHeight()
             if open then
                 local contentH = 35 + (#list * 26)

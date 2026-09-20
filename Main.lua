@@ -1,4 +1,4 @@
---[==[ [Mateo Hub - Draggable & Fixed Engine] ]==]
+--[==[ [Mateo Hub - Animated & Fully Equipped Engine] ]==]
 local _ENV = (getgenv or function() return _G end)()
 local _U = {
     [1] = "\83\99\114\101\101\110\71\117\105",
@@ -19,11 +19,18 @@ local function _D(i)
 end
 
 local Themes = {
-    ["Neon"] = {Main = Color3.fromRGB(15, 15, 20), Accent = Color3.fromRGB(0, 255, 150), Secondary = Color3.fromRGB(25, 25, 35)},
-    ["Rojo"] = {Main = Color3.fromRGB(20, 15, 15), Accent = Color3.fromRGB(255, 50, 50), Secondary = Color3.fromRGB(35, 25, 25)},
-    ["Oscuro"] = {Main = Color3.fromRGB(12, 12, 12), Accent = Color3.fromRGB(80, 80, 80), Secondary = Color3.fromRGB(20, 20, 20)},
-    ["Amatista"] = {Main = Color3.fromRGB(18, 14, 25), Accent = Color3.fromRGB(170, 85, 255), Secondary = Color3.fromRGB(28, 22, 38)}
+    ["Neon"] = {Main = Color3.fromRGB(15, 15, 20), Accent = Color3.fromRGB(0, 255, 150), Secondary = Color3.fromRGB(25, 25, 35), Hover = Color3.fromRGB(35, 35, 48)},
+    ["Rojo"] = {Main = Color3.fromRGB(20, 15, 15), Accent = Color3.fromRGB(255, 50, 50), Secondary = Color3.fromRGB(35, 25, 25), Hover = Color3.fromRGB(48, 35, 35)},
+    ["Oscuro"] = {Main = Color3.fromRGB(12, 12, 12), Accent = Color3.fromRGB(80, 80, 80), Secondary = Color3.fromRGB(20, 20, 20), Hover = Color3.fromRGB(30, 30, 30)},
+    ["Amatista"] = {Main = Color3.fromRGB(18, 14, 25), Accent = Color3.fromRGB(170, 85, 255), Secondary = Color3.fromRGB(28, 22, 38), Hover = Color3.fromRGB(38, 30, 50)}
 }
+
+local TS = game:GetService("TweenService")
+local function Tween(obj, info, props)
+    local t = TS:Create(obj, TweenInfo.new(unpack(info)), props)
+    t:Play()
+    return t
+end
 
 local _M = {}
 _M.__index = _M
@@ -53,7 +60,6 @@ function _M:CrearWindow(cfg)
         pcall(function() s.SG.Parent = CG end)
         if not s.SG.Parent then s.SG.Parent = LP:WaitForChild(_D(3)) end
         
-        -- Tamaño más chico y compacto (420x260)
         s.MF = Instance.new(_D(4))
         s.MF.Size = UDim2.new(0, 420, 0, 260)
         s.MF.Position = UDim2.new(0.5, -210, 0.5, -130)
@@ -63,7 +69,11 @@ function _M:CrearWindow(cfg)
         
         Instance.new(_D(8), s.MF).CornerRadius = UDim.new(0, 8)
         
-        -- Sistema para arrastrar la GUI (Draggable)
+        -- Animación de apertura suave
+        s.MF.Size = UDim2.new(0, 0, 0, 0)
+        Tween(s.MF, {0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out}, {Size = UDim2.new(0, 420, 0, 260)})
+        
+        -- Draggable
         local dragging, dragInput, dragStart, startPos
         s.MF.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -71,19 +81,13 @@ function _M:CrearWindow(cfg)
                 dragStart = input.Position
                 startPos = s.MF.Position
                 input.Changed:Connect(function()
-                    if input.UserInputState == Enum.UserInputState.End then
-                        dragging = false
-                    end
+                    if input.UserInputState == Enum.UserInputState.End then dragging = false end
                 end)
             end
         end)
-        
         s.MF.InputChanged:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-                dragInput = input
-            end
+            if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end
         end)
-        
         UIS.InputChanged:Connect(function(input)
             if input == dragInput and dragging then
                 local delta = input.Position - dragStart
@@ -119,7 +123,7 @@ function _M:CrearWindow(cfg)
         s.TL.TextXAlignment = Enum.TextXAlignment.Left
         s.TL.Parent = s.MF
         
-        -- Botón Cerrar
+        -- Botón Cerrar con animación
         local closeBtn = Instance.new(_D(7), s.MF)
         closeBtn.Size = UDim2.new(0, 20, 0, 20)
         closeBtn.Position = UDim2.new(1, -26, 0, 5)
@@ -129,7 +133,14 @@ function _M:CrearWindow(cfg)
         closeBtn.Font = Enum.Font.GothamBold
         closeBtn.TextSize = 9
         Instance.new(_D(8), closeBtn).CornerRadius = UDim.new(1, 0)
-        closeBtn.MouseButton1Click:Connect(function() s.SG:Destroy() end)
+        
+        closeBtn.MouseEnter:Connect(function() Tween(closeBtn, {0.2}, {BackgroundColor3 = Color3.fromRGB(255, 80, 80)}) end)
+        closeBtn.MouseLeave:Connect(function() Tween(closeBtn, {0.2}, {BackgroundColor3 = Color3.fromRGB(200, 50, 50)}) end)
+        closeBtn.MouseButton1Click:Connect(function()
+            Tween(s.MF, {0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In}, {Size = UDim2.new(0, 0, 0, 0)})
+            task.wait(0.2)
+            s.SG:Destroy()
+        end)
         
         -- Botón Minimizar
         local minimized = false
@@ -143,14 +154,16 @@ function _M:CrearWindow(cfg)
         minBtn.TextSize = 11
         Instance.new(_D(8), minBtn).CornerRadius = UDim.new(1, 0)
         
+        minBtn.MouseEnter:Connect(function() Tween(minBtn, {0.2}, {BackgroundColor3 = Color3.fromRGB(255, 180, 80)}) end)
+        minBtn.MouseLeave:Connect(function() Tween(minBtn, {0.2}, {BackgroundColor3 = Color3.fromRGB(220, 150, 50)}) end)
+        
         minBtn.MouseButton1Click:Connect(function()
             minimized = not minimized
             if s.TH then s.TH.Visible = not minimized end
             if s.PCContainer then s.PCContainer.Visible = not minimized end
-            s.MF.Size = minimized and UDim2.new(0, 420, 0, 30) or UDim2.new(0, 420, 0, 260)
+            Tween(s.MF, {0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out}, {Size = minimized and UDim2.new(0, 420, 0, 30) or UDim2.new(0, 420, 0, 260)})
         end)
         
-        -- Contenedor de Pestañas (Izquierda)
         s.TH = Instance.new(_D(6))
         s.TH.Size = UDim2.new(0, 110, 1, -38)
         s.TH.Position = UDim2.new(0, 8, 0, 32)
@@ -163,7 +176,6 @@ function _M:CrearWindow(cfg)
         UL.Padding = UDim.new(0, 4)
         UL.Parent = s.TH
         
-        -- Contenedor General para las Páginas (Derecha)
         s.PCContainer = Instance.new(_D(4), s.MF)
         s.PCContainer.Size = UDim2.new(1, -125, 1, -38)
         s.PCContainer.Position = UDim2.new(0, 120, 0, 32)
@@ -234,7 +246,7 @@ end
 
 function _M:CrearTab(tn)
     if not self.PCContainer then return end
-    s = self
+    local s = self
     s.TabsCount = s.TabsCount + 1
     
     local TB = Instance.new(_D(7))
@@ -265,20 +277,34 @@ function _M:CrearTab(tn)
         TP.CanvasSize = UDim2.new(0, 0, 0, PL.AbsoluteContentSize.Y + 10)
     end)
     
+    TB.MouseEnter:Connect(function()
+        if TB.TextColor3 ~= s._CurrTheme.Accent then
+            Tween(TB, {0.2}, {BackgroundColor3 = s._CurrTheme.Hover})
+        end
+    end)
+    TB.MouseLeave:Connect(function()
+        if TB.TextColor3 ~= s._CurrTheme.Accent then
+            Tween(TB, {0.2}, {BackgroundColor3 = s._CurrTheme.Secondary})
+        end
+    end)
+    
     TB.MouseButton1Click:Connect(function()
         for _, p in ipairs(s.PCContainer:GetChildren()) do
             if p:IsA(_D(6)) then p.Visible = false end
         end
         for _, b in ipairs(s.TH:GetChildren()) do
-            if b:IsA(_D(7)) then b.TextColor3 = Color3.fromRGB(160, 160, 160) end
+            if b:IsA(_D(7)) then 
+                Tween(b, {0.2}, {TextColor3 = Color3.fromRGB(160, 160, 160), BackgroundColor3 = s._CurrTheme.Secondary}) 
+            end
         end
         TP.Visible = true
-        TB.TextColor3 = s._CurrTheme.Accent
+        Tween(TB, {0.2}, {TextColor3 = s._CurrTheme.Accent, BackgroundColor3 = s._CurrTheme.Hover})
     end)
     
     if s.TabsCount == 1 then
         TP.Visible = true
         TB.TextColor3 = s._CurrTheme.Accent
+        TB.BackgroundColor3 = s._CurrTheme.Hover
     end
     
     local El = {}
@@ -295,7 +321,11 @@ function _M:CrearTab(tn)
         b.Parent = TP
         Instance.new(_D(8), b).CornerRadius = UDim.new(0, 6)
         
-        b.MouseButton1Click:Connect(function()
+        b.MouseEnter:Connect(function() Tween(b, {0.2}, {BackgroundColor3 = s._CurrTheme.Hover}) end)
+        b.MouseLeave:Connect(function() Tween(b, {0.2}, {BackgroundColor3 = s._CurrTheme.Secondary}) end)
+        b.MouseButton1Down:Connect(function() Tween(b, {0.1}, {Size = UDim2.new(1, -10, 0, 28)}) end)
+        b.MouseButton1Up:Connect(function() 
+            Tween(b, {0.1}, {Size = UDim2.new(1, -6, 0, 30)})
             if cb then pcall(cb) end
         end)
     end
@@ -319,9 +349,12 @@ function _M:CrearTab(tn)
         ind.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
         Instance.new(_D(8), ind).CornerRadius = UDim.new(1, 0)
         
+        b.MouseEnter:Connect(function() Tween(b, {0.2}, {BackgroundColor3 = s._CurrTheme.Hover}) end)
+        b.MouseLeave:Connect(function() Tween(b, {0.2}, {BackgroundColor3 = s._CurrTheme.Secondary}) end)
+        
         b.MouseButton1Click:Connect(function()
             tg = not tg
-            ind.BackgroundColor3 = tg and s._CurrTheme.Accent or Color3.fromRGB(50, 50, 60)
+            Tween(ind, {0.2}, {BackgroundColor3 = tg and s._CurrTheme.Accent or Color3.fromRGB(50, 50, 60)})
             pcall(cb, tg)
         end)
     end
@@ -391,9 +424,25 @@ function _M:CrearTab(tn)
         inp.TextSize = 10
         inp.TextXAlignment = Enum.TextXAlignment.Left
         
+        bx.MouseEnter:Connect(function() Tween(bx, {0.2}, {BackgroundColor3 = s._CurrTheme.Hover}) end)
+        bx.MouseLeave:Connect(function() Tween(bx, {0.2}, {BackgroundColor3 = s._CurrTheme.Secondary}) end)
+        
         inp.FocusLost:Connect(function(ep)
             if ep then pcall(cb, inp.Text) end
         end)
+    end
+    
+    function El:AddLabel(txt)
+        local lbl = Instance.new(_D(5))
+        lbl.Size = UDim2.new(1, -6, 0, 24)
+        lbl.BackgroundTransparency = 1
+        lbl.Font = Enum.Font.GothamMedium
+        lbl.Text = " " .. txt
+        lbl.TextColor3 = Color3.fromRGB(180, 180, 180)
+        lbl.TextSize = 11
+        lbl.TextXAlignment = Enum.TextXAlignment.Left
+        lbl.Parent = TP
+        return lbl
     end
     
     return El

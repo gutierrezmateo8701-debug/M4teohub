@@ -1,4 +1,4 @@
---[==[ [Mateo Hub - Animated & Fully Equipped Engine] ]==]
+--[==[ [Mateo Hub - Dropdown & Animated Engine] ]==]
 local _ENV = (getgenv or function() return _G end)()
 local _U = {
     [1] = "\83\99\114\101\101\110\71\117\105",
@@ -69,11 +69,9 @@ function _M:CrearWindow(cfg)
         
         Instance.new(_D(8), s.MF).CornerRadius = UDim.new(0, 8)
         
-        -- Animación de apertura suave
         s.MF.Size = UDim2.new(0, 0, 0, 0)
         Tween(s.MF, {0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out}, {Size = UDim2.new(0, 420, 0, 260)})
         
-        -- Draggable
         local dragging, dragInput, dragStart, startPos
         s.MF.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -123,7 +121,6 @@ function _M:CrearWindow(cfg)
         s.TL.TextXAlignment = Enum.TextXAlignment.Left
         s.TL.Parent = s.MF
         
-        -- Botón Cerrar con animación
         local closeBtn = Instance.new(_D(7), s.MF)
         closeBtn.Size = UDim2.new(0, 20, 0, 20)
         closeBtn.Position = UDim2.new(1, -26, 0, 5)
@@ -142,7 +139,6 @@ function _M:CrearWindow(cfg)
             s.SG:Destroy()
         end)
         
-        -- Botón Minimizar
         local minimized = false
         local minBtn = Instance.new(_D(7), s.MF)
         minBtn.Size = UDim2.new(0, 20, 0, 20)
@@ -443,6 +439,66 @@ function _M:CrearTab(tn)
         lbl.TextXAlignment = Enum.TextXAlignment.Left
         lbl.Parent = TP
         return lbl
+    end
+
+    -- NUEVA FUNCIÓN: Dropdown (Para listar jugadores, objetos o selecciones dinámicamente)
+    function El:AddDropdown(txt, list, cb)
+        local open = false
+        local dropFrame = Instance.new(_D(4))
+        dropFrame.Size = UDim2.new(1, -6, 0, 30)
+        dropFrame.BackgroundColor3 = s._CurrTheme.Secondary
+        dropFrame.ClipsDescendants = true
+        dropFrame.Parent = TP
+        Instance.new(_D(8), dropFrame).CornerRadius = UDim.new(0, 6)
+        
+        local mainBtn = Instance.new(_D(7), dropFrame)
+        mainBtn.Size = UDim2.new(1, 0, 0, 30)
+        mainBtn.BackgroundTransparency = 1
+        mainBtn.Font = Enum.Font.Gotham
+        mainBtn.Text = "  " .. txt .. " ▾"
+        mainBtn.TextColor3 = Color3.fromRGB(220, 220, 220)
+        mainBtn.TextSize = 11
+        mainBtn.TextXAlignment = Enum.TextXAlignment.Left
+        
+        local listLayout = Instance.new("UIListLayout")
+        listLayout.Padding = UDim.new(0, 2)
+        listLayout.Parent = dropFrame
+        
+        -- Altura base del botón + elementos futuros
+        local function updateHeight()
+            if open then
+                local contentH = 35 + (#list * 26)
+                Tween(dropFrame, {0.2}, {Size = UDim2.new(1, -6, 0, contentH)})
+                mainBtn.Text = "  " .. txt .. " ▴"
+            else
+                Tween(dropFrame, {0.2}, {Size = UDim2.new(1, -6, 0, 30)})
+                mainBtn.Text = "  " .. txt .. " ▾"
+            end
+        end
+        
+        for _, item in ipairs(list) do
+            local itemBtn = Instance.new(_D(7), dropFrame)
+            itemBtn.Size = UDim2.new(1, -10, 0, 24)
+            itemBtn.Position = UDim2.new(0, 5, 0, 0)
+            itemBtn.BackgroundColor3 = s._CurrTheme.Main
+            itemBtn.Font = Enum.Font.Gotham
+            itemBtn.Text = "   " .. tostring(item)
+            itemBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+            itemBtn.TextSize = 10
+            itemBtn.TextXAlignment = Enum.TextXAlignment.Left
+            Instance.new(_D(8), itemBtn).CornerRadius = UDim.new(0, 4)
+            
+            itemBtn.MouseButton1Click:Connect(function()
+                open = false
+                updateHeight()
+                pcall(cb, item)
+            end)
+        end
+        
+        mainBtn.MouseButton1Click:Connect(function()
+            open = not open
+            updateHeight()
+        end)
     end
     
     return El

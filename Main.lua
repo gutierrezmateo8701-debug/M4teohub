@@ -1,4 +1,4 @@
---[==[ [Protected by Delta Security Engine - Obfuscated] ]==]
+--[==[ [Mateo Hub - Protected & Feature-Rich Engine] ]==]
 local _ENV = (getgenv or function() return _G end)()
 local _U = {
     [1] = "\83\99\114\101\101\110\71\117\105",
@@ -18,6 +18,13 @@ local function _D(i)
     return r
 end
 
+local Themes = {
+    ["Neon"] = {Main = Color3.fromRGB(15, 15, 20), Accent = Color3.fromRGB(0, 255, 150), Secondary = Color3.fromRGB(25, 25, 35)},
+    ["Rojo"] = {Main = Color3.fromRGB(20, 15, 15), Accent = Color3.fromRGB(255, 50, 50), Secondary = Color3.fromRGB(35, 25, 25)},
+    ["Oscuro"] = {Main = Color3.fromRGB(12, 12, 12), Accent = Color3.fromRGB(80, 80, 80), Secondary = Color3.fromRGB(20, 20, 20)},
+    ["Amatista"] = {Main = Color3.fromRGB(18, 14, 25), Accent = Color3.fromRGB(170, 85, 255), Secondary = Color3.fromRGB(28, 22, 38)}
+}
+
 local _M = {}
 _M.__index = _M
 
@@ -27,10 +34,14 @@ function _M:CrearWindow(cfg)
     s._S = cfg.Subtitulo or "by Mateo"
     s._KS = cfg.KeySistem or "No"
     s._K = cfg.Key or ""
+    s._ThemeName = cfg.Tema or "Neon"
+    s._RGB = cfg.BordesRGB or false
+    s._CurrTheme = Themes[s._ThemeName] or Themes["Neon"]
     
     local PL = game:GetService("Players")
     local LP = PL.LocalPlayer
     local CG = game:GetService("CoreGui")
+    local RS = game:GetService("RunService")
     
     local function _Build()
         s.SG = Instance.new(_D(1))
@@ -42,14 +53,31 @@ function _M:CrearWindow(cfg)
         s.MF = Instance.new(_D(4))
         s.MF.Size = UDim2.new(0, 500, 0, 340)
         s.MF.Position = UDim2.new(0.5, -250, 0.5, -170)
-        s.MF.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
+        s.MF.BackgroundColor3 = s._CurrTheme.Main
         s.MF.BorderSizePixel = 0
         s.MF.Parent = s.SG
         
         Instance.new(_D(8), s.MF).CornerRadius = UDim.new(0, 10)
         
+        -- Bordes RGB Dinámicos (Gradiente o Cambio de Color)
+        local rgbStroke = Instance.new("UIStroke")
+        rgbStroke.Thickness = 2
+        rgbStroke.Parent = s.MF
+        if s._RGB then
+            task.spawn(function()
+                local h = 0
+                while s.MF and s.MF.Parent do
+                    h = (h + 0.01) % 1
+                    rgbStroke.Color = Color3.fromHSV(h, 1, 1)
+                    RS.RenderStepped:Wait()
+                end
+            end)
+        else
+            rgbStroke.Color = s._CurrTheme.Accent
+        end
+        
         s.TL = Instance.new(_D(5))
-        s.TL.Size = UDim2.new(1, -20, 0, 40)
+        s.TL.Size = UDim2.new(1, -110, 0, 40)
         s.TL.Position = UDim2.new(0, 10, 0, 0)
         s.TL.BackgroundTransparency = 1
         s.TL.Font = Enum.Font.GothamBold
@@ -59,6 +87,44 @@ function _M:CrearWindow(cfg)
         s.TL.TextSize = 15
         s.TL.TextXAlignment = Enum.TextXAlignment.Left
         s.TL.Parent = s.MF
+        
+        -- Botones de Control Superior (Minimizar, Tamaño Chico, Cerrar)
+        local closeBtn = Instance.new(_D(7), s.MF)
+        closeBtn.Size = UDim2.new(0, 26, 0, 26)
+        closeBtn.Position = UDim2.new(1, -32, 0, 7)
+        closeBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+        closeBtn.Text = "X"
+        closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        closeBtn.Font = Enum.Font.GothamBold
+        closeBtn.TextSize = 11
+        Instance.new(_D(8), closeBtn).CornerRadius = UDim.new(1, 0)
+        
+        closeBtn.MouseButton1Click:Connect(function()
+            s.SG:Destroy()
+        end)
+        
+        -- Minimizar / Toggle Tamaño Chico
+        local minimized = false
+        local minBtn = Instance.new(_D(7), s.MF)
+        minBtn.Size = UDim2.new(0, 26, 0, 26)
+        minBtn.Position = UDim2.new(1, -64, 0, 7)
+        minBtn.BackgroundColor3 = Color3.fromRGB(220, 150, 50)
+        minBtn.Text = "-"
+        minBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        minBtn.Font = Enum.Font.GothamBold
+        minBtn.TextSize = 13
+        Instance.new(_D(8), minBtn).CornerRadius = UDim.new(1, 0)
+        
+        minBtn.MouseButton1Click:Connect(function()
+            minimized = not minimized
+            if s.TH then s.TH.Visible = not minimized end
+            if s.PC then
+                for _, child in ipairs(s.PC:GetChildren()) do
+                    child.Visible = not minimized and (child == s.ActivePage)
+                end
+            end
+            s.MF.Size = minimized and UDim2.new(0, 500, 0, 40) or UDim2.new(0, 500, 0, 340)
+        end)
         
         s.TH = Instance.new(_D(6))
         s.TH.Size = UDim2.new(0, 130, 1, -55)
@@ -85,15 +151,19 @@ function _M:CrearWindow(cfg)
         local KF = Instance.new(_D(4), KG)
         KF.Size = UDim2.new(0, 320, 0, 180)
         KF.Position = UDim2.new(0.5, -160, 0.5, -90)
-        KF.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+        KF.BackgroundColor3 = s._CurrTheme.Main
         Instance.new(_D(8), KF).CornerRadius = UDim.new(0, 10)
+        
+        local kStroke = Instance.new("UIStroke", KF)
+        kStroke.Thickness = 2
+        kStroke.Color = s._CurrTheme.Accent
         
         local KB = Instance.new("TextBox", KF)
         KB.Size = UDim2.new(0.85, 0, 0, 38)
         KB.Position = UDim2.new(0.075, 0, 0.35, 0)
         KB.PlaceholderText = "Ingresa tu key..."
         KB.Text = ""
-        KB.BackgroundColor3 = Color3.fromRGB(32, 32, 40)
+        KB.BackgroundColor3 = s._CurrTheme.Secondary
         KB.TextColor3 = Color3.fromRGB(255, 255, 255)
         KB.Font = Enum.Font.Gotham
         KB.TextSize = 13
@@ -103,7 +173,7 @@ function _M:CrearWindow(cfg)
         BT.Size = UDim2.new(0.85, 0, 0, 38)
         BT.Position = UDim2.new(0.075, 0, 0.68, 0)
         BT.Text = "Verificar Key"
-        BT.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+        BT.BackgroundColor3 = s._CurrTheme.Accent
         BT.TextColor3 = Color3.fromRGB(255, 255, 255)
         BT.Font = Enum.Font.GothamBold
         BT.TextSize = 13
@@ -129,7 +199,7 @@ function _M:CrearTab(tn)
     if not self.PC then return end
     local TB = Instance.new(_D(7))
     TB.Size = UDim2.new(1, 0, 0, 34)
-    TB.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
+    TB.BackgroundColor3 = self._CurrTheme.Secondary
     TB.Font = Enum.Font.GothamMedium
     TB.Text = "  " .. tn
     TB.TextColor3 = Color3.fromRGB(160, 160, 160)
@@ -163,12 +233,14 @@ function _M:CrearTab(tn)
             if b:IsA(_D(7)) then b.TextColor3 = Color3.fromRGB(160, 160, 160) end
         end
         TP.Visible = true
-        TB.TextColor3 = Color3.fromRGB(0, 170, 255)
+        self.ActivePage = TP
+        TB.TextColor3 = self._CurrTheme.Accent
     end)
     
     if #self.PC:GetChildren() == 1 then
         TP.Visible = true
-        TB.TextColor3 = Color3.fromRGB(0, 170, 255)
+        self.ActivePage = TP
+        TB.TextColor3 = self._CurrTheme.Accent
     end
     
     local El = {}
@@ -177,7 +249,7 @@ function _M:CrearTab(tn)
         local tg = false
         local b = Instance.new(_D(7))
         b.Size = UDim2.new(1, -10, 0, 36)
-        b.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
+        b.BackgroundColor3 = self._CurrTheme.Secondary
         b.Font = Enum.Font.Gotham
         b.Text = "  " .. txt
         b.TextColor3 = Color3.fromRGB(220, 220, 220)
@@ -194,7 +266,7 @@ function _M:CrearTab(tn)
         
         b.MouseButton1Click:Connect(function()
             tg = not tg
-            ind.BackgroundColor3 = tg and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(50, 50, 60)
+            ind.BackgroundColor3 = tg and self._CurrTheme.Accent or Color3.fromRGB(50, 50, 60)
             pcall(cb, tg)
         end)
     end
@@ -202,7 +274,7 @@ function _M:CrearTab(tn)
     function El:AddSlider(txt, min, max, cb)
         local sl = Instance.new(_D(4))
         sl.Size = UDim2.new(1, -10, 0, 50)
-        sl.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
+        sl.BackgroundColor3 = self._CurrTheme.Secondary
         sl.Parent = TP
         Instance.new(_D(8), sl).CornerRadius = UDim.new(0, 6)
         
@@ -224,7 +296,7 @@ function _M:CrearTab(tn)
         
         local fl = Instance.new(_D(4), br)
         fl.Size = UDim2.new(0, 0, 1, 0)
-        fl.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+        fl.BackgroundColor3 = self._CurrTheme.Accent
         Instance.new(_D(8), fl).CornerRadius = UDim.new(1, 0)
         
         local dr = false
@@ -248,7 +320,7 @@ function _M:CrearTab(tn)
     function El:AddTextbox(txt, ph, cb)
         local bx = Instance.new(_D(4))
         bx.Size = UDim2.new(1, -10, 0, 38)
-        bx.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
+        bx.BackgroundColor3 = self._CurrTheme.Secondary
         bx.Parent = TP
         Instance.new(_D(8), bx).CornerRadius = UDim.new(0, 6)
         
@@ -273,7 +345,7 @@ function _M:CrearTab(tn)
         local opn = false
         local mb = Instance.new(_D(4))
         mb.Size = UDim2.new(1, -10, 0, 36)
-        mb.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
+        mb.BackgroundColor3 = self._CurrTheme.Secondary
         mb.ClipsDescendants = true
         mb.Parent = TP
         Instance.new(_D(8), mb).CornerRadius = UDim.new(0, 6)
@@ -318,7 +390,7 @@ function _M:CrearTab(tn)
     function El:AddColorPicker(txt, cb)
         local cpf = Instance.new(_D(4))
         cpf.Size = UDim2.new(1, -10, 0, 38)
-        cpf.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
+        cpf.BackgroundColor3 = self._CurrTheme.Secondary
         cpf.Parent = TP
         Instance.new(_D(8), cpf).CornerRadius = UDim.new(0, 6)
         
@@ -341,7 +413,7 @@ function _M:CrearTab(tn)
         local pop = Instance.new(_D(4), self.MF)
         pop.Size = UDim2.new(0, 150, 0, 150)
         pop.Position = UDim2.new(0.5, -75, 0.5, -75)
-        pop.BackgroundColor3 = Color3.fromRGB(20, 20, 26)
+        pop.BackgroundColor3 = self._CurrTheme.Main
         pop.Visible = false
         Instance.new(_D(8), pop).CornerRadius = UDim.new(1, 0)
         

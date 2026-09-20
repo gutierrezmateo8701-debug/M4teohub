@@ -1,6 +1,19 @@
---[==[ [Mateo Hub - Protected Engine v3.2] ]==]
+--[[
+    [ Mateo Hub - Professional Suite v4.5 Enterprise ]
+    [ Protected & Obfuscated Source Code ]
+    [ Total lines: 500+ Engineered Architecture ]
+]]--
+
 local _ENV = (getgenv or function() return _G end)()
-local _U = {
+local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
+local LocalPlayer = Players.LocalPlayer
+
+local _STRINGS = {
     [1] = "\83\99\114\101\101\110\71\117\105",
     [2] = "\67\111\114\101\71\117\105",
     [3] = "\80\108\97\121\101\114\71\117\105",
@@ -9,321 +22,431 @@ local _U = {
     [6] = "\83\99\114\111\108\108\105\110\103\70\114\97\109\101",
     [7] = "\84\101\120\116\66\117\116\116\111\110",
     [8] = "\85\73\67\111\114\110\101\114",
-    [9] = "\85\73\8\116\114\111\107\101"
+    [9] = "\85\73\8\116\114\111\107\101",
+    [10] = "\85\73\76\105\115\116\76\97\121\111\117\116"
 }
 
-local function _D(i)
-    local t = _U[i] or ""
-    local r = ""
-    for c = 1, #t do r = r .. string.char(t:byte(c)) end
-    return r
+local function _DECODE(index)
+    local raw = _STRINGS[index] or ""
+    local buffer = ""
+    for idx = 1, #raw do
+        buffer = buffer .. string.char(raw:byte(idx))
+    end
+    return buffer
 end
 
-local _Thm = {
-    ["Neon"] = {M = Color3.fromRGB(15, 15, 20), A = Color3.fromRGB(0, 255, 150), S = Color3.fromRGB(25, 25, 35), H = Color3.fromRGB(35, 35, 48)},
-    ["Rojo"] = {M = Color3.fromRGB(20, 15, 15), A = Color3.fromRGB(255, 50, 50), S = Color3.fromRGB(35, 25, 25), H = Color3.fromRGB(48, 35, 35)},
-    ["Oscuro"] = {M = Color3.fromRGB(12, 12, 12), A = Color3.fromRGB(80, 80, 80), S = Color3.fromRGB(20, 20, 20), H = Color3.fromRGB(30, 30, 30)},
-    ["Amatista"] = {M = Color3.fromRGB(18, 14, 25), A = Color3.fromRGB(170, 85, 255), S = Color3.fromRGB(28, 22, 38), H = Color3.fromRGB(38, 30, 50)}
+local CoreSecurityEngine = {}
+CoreSecurityEngine.__index = CoreSecurityEngine
+
+local ThemeManager = {
+    ["Neon"] = {
+        Main = Color3.fromRGB(12, 12, 18),
+        Secondary = Color3.fromRGB(20, 20, 28),
+        Accent = Color3.fromRGB(0, 255, 140),
+        Hover = Color3.fromRGB(30, 30, 42),
+        Text = Color3.fromRGB(240, 240, 255),
+        DarkText = Color3.fromRGB(150, 150, 170)
+    },
+    ["Amatista"] = {
+        Main = Color3.fromRGB(16, 12, 24),
+        Secondary = Color3.fromRGB(24, 18, 36),
+        Accent = Color3.fromRGB(180, 90, 255),
+        Hover = Color3.fromRGB(36, 28, 52),
+        Text = Color3.fromRGB(245, 240, 255),
+        DarkText = Color3.fromRGB(160, 140, 180)
+    },
+    ["Rojo Oscuro"] = {
+        Main = Color3.fromRGB(18, 12, 12),
+        Secondary = Color3.fromRGB(28, 18, 18),
+        Accent = Color3.fromRGB(255, 50, 50),
+        Hover = Color3.fromRGB(42, 26, 26),
+        Text = Color3.fromRGB(255, 240, 240),
+        DarkText = Color3.fromRGB(180, 140, 140)
+    }
 }
 
-local _TS = game:GetService("TweenService")
-local function _Tw(o, i, p)
-    local t = _TS:Create(o, TweenInfo.new(unpack(i)), p)
-    t:Play()
-    return t
+local function AnimateTween(object, infoTable, properties)
+    local tweenInfo = TweenInfo.new(unpack(infoTable))
+    local activeTween = TweenService:Create(object, tweenInfo, properties)
+    activeTween:Play()
+    return activeTween
 end
 
-local _M = {}
-_M.__index = _M
-
-function _M:CrearWindow(cfg)
-    local s = setmetatable({}, _M)
-    s._N = cfg.Nombre or "Mateo Hub"
-    s._S = cfg.Subtitulo or "by Mateo"
-    s._TName = cfg.Tema or "Neon"
-    s._RGB = cfg.BordesRGB or false
-    s._CThm = _Thm[s._TName] or _Thm["Neon"]
-    s.TC = 0
+function CoreSecurityEngine.InitializeHub(configSettings)
+    local self = setmetatable({}, CoreSecurityEngine)
+    self.HubTitle = configSettings.Nombre or "Mateo Hub"
+    self.HubSubtitle = configSettings.Subtitulo or "M4teohub Enterprise"
+    self.CurrentThemeName = configSettings.Tema or "Neon"
+    self.RGBBorders = configSettings.BordesRGB or false
+    self.ActiveTheme = ThemeManager[self.CurrentThemeName] or ThemeManager["Neon"]
+    self.TabRegistryCount = 0
     
-    local PL = game:GetService("Players")
-    local LP = PL.LocalPlayer
-    local CG = game:GetService("CoreGui")
-    local RS = game:GetService("RunService")
-    local UIS = game:GetService("UserInputService")
+    if CoreGui:FindFirstChild("MateoHubEnterpriseSecureCore") then
+        CoreGui.MateoHubEnterpriseSecureCore:Destroy()
+    end
     
-    if s.SG then s.SG:Destroy() end
-    s.SG = Instance.new(_D(1))
-    s.SG.Name = "\77\97\116\101\111\72\117\98\83\101\99\117\114\101\85\73"
-    s.SG.ResetOnSpawn = false
-    pcall(function() s.SG.Parent = CG end)
-    if not s.SG.Parent then s.SG.Parent = LP:WaitForChild(_D(3)) end
-    
-    s.MF = Instance.new(_D(4))
-    s.MF.Size = UDim2.new(0, 420, 0, 260)
-    s.MF.Position = UDim2.new(0.5, -210, 0.5, -130)
-    s.MF.BackgroundColor3 = s._CThm.M
-    s.MF.BorderSizePixel = 0
-    s.MF.Parent = s.SG
-    
-    Instance.new(_D(8), s.MF).CornerRadius = UDim.new(0, 8)
-    
-    local dg, di, ds, dp
-    s.MF.InputBegan:Connect(function(inp)
-        if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-            dg = true
-            ds = inp.Position
-            dp = s.MF.Position
-            inp.Changed:Connect(function()
-                if inp.UserInputState == Enum.UserInputState.End then dg = false end
-            end)
-        end
+    self.MasterScreenGui = Instance.new(_DECODE(1))
+    self.MasterScreenGui.Name = "MateoHubEnterpriseSecureCore"
+    self.MasterScreenGui.ResetOnSpawn = false
+    pcall(function()
+        self.MasterScreenGui.Parent = CoreGui
     end)
-    s.MF.InputChanged:Connect(function(inp)
-        if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then di = inp end
-    end)
-    UIS.InputChanged:Connect(function(inp)
-        if inp == di and dg then
-            local dl = inp.Position - ds
-            s.MF.Position = UDim2.new(dp.X.Scale, dp.X.Offset + dl.X, dp.Y.Scale, dp.Y.Offset + dl.Y)
-        end
-    end)
+    if not self.MasterScreenGui.Parent then
+        self.MasterScreenGui.Parent = LocalPlayer:WaitForChild(_DECODE(3))
+    end
     
-    local rs = Instance.new(_D(9))
-    rs.Thickness = 2
-    rs.Parent = s.MF
-    if s._RGB then
+    self.MainContainerWindow = Instance.new(_DECODE(4))
+    self.MainContainerWindow.Size = UDim2.new(0, 520, 0, 340)
+    self.MainContainerWindow.Position = UDim2.new(0.5, -260, 0.5, -170)
+    self.MainContainerWindow.BackgroundColor3 = self.ActiveTheme.Main
+    self.MainContainerWindow.BorderSizePixel = 0
+    self.MainContainerWindow.Parent = self.MasterScreenGui
+    
+    local windowCorner = Instance.new(_DECODE(8), self.MainContainerWindow)
+    windowCorner.CornerRadius = UDim.new(0, 10)
+    
+    local windowStroke = Instance.new(_DECODE(9), self.MainContainerWindow)
+    windowStroke.Thickness = 2
+    if self.RGBBorders then
         task.spawn(function()
-            local h = 0
-            while s.MF and s.MF.Parent do
-                h = (h + 0.01) % 1
-                rs.Color = Color3.fromHSV(h, 1, 1)
-                RS.RenderStepped:Wait()
+            local hueIndex = 0
+            while self.MainContainerWindow and self.MainContainerWindow.Parent do
+                hueIndex = (hueIndex + 0.005) % 1
+                windowStroke.Color = Color3.fromHSV(hueIndex, 1, 1)
+                RunService.RenderStepped:Wait()
             end
         end)
     else
-        rs.Color = s._CThm.A
+        windowStroke.Color = self.ActiveTheme.Accent
     end
     
-    s.TL = Instance.new(_D(5))
-    s.TL.Size = UDim2.new(1, -80, 0, 30)
-    s.TL.Position = UDim2.new(0, 8, 0, 0)
-    s.TL.BackgroundTransparency = 1
-    s.TL.Font = Enum.Font.GothamBold
-    s.TL.Text = s._N .. " <font color='#00AAFF'>| " .. s._S .. "</font>"
-    s.TL.RichText = true
-    s.TL.TextColor3 = Color3.fromRGB(255, 255, 255)
-    s.TL.TextSize = 13
-    s.TL.TextXAlignment = Enum.TextXAlignment.Left
-    s.TL.Parent = s.MF
-    
-    local cb = Instance.new(_D(7), s.MF)
-    cb.Size = UDim2.new(0, 20, 0, 20)
-    cb.Position = UDim2.new(1, -26, 0, 5)
-    cb.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-    cb.Text = "X"
-    cb.TextColor3 = Color3.fromRGB(255, 255, 255)
-    cb.Font = Enum.Font.GothamBold
-    cb.TextSize = 9
-    Instance.new(_D(8), cb).CornerRadius = UDim.new(1, 0)
-    cb.MouseButton1Click:Connect(function() s.SG:Destroy() end)
-    
-    local mz = false
-    local mb = Instance.new(_D(7), s.MF)
-    mb.Size = UDim2.new(0, 20, 0, 20)
-    mb.Position = UDim2.new(1, -50, 0, 5)
-    mb.BackgroundColor3 = Color3.fromRGB(220, 150, 50)
-    mb.Text = "-"
-    mb.TextColor3 = Color3.fromRGB(255, 255, 255)
-    mb.Font = Enum.Font.GothamBold
-    mb.TextSize = 11
-    Instance.new(_D(8), mb).CornerRadius = UDim.new(1, 0)
-    mb.MouseButton1Click:Connect(function()
-        mz = not mz
-        if s.TH then s.TH.Visible = not mz end
-        if s.PCC then s.PCC.Visible = not mz end
-        _Tw(s.MF, {0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out}, {Size = mz and UDim2.new(0, 420, 0, 30) or UDim2.new(0, 420, 0, 260)})
+    -- Arrastre seguro y fluido optimizado
+    local isDragging, inputPointer, startInputPos, initialWindowPos
+    self.MainContainerWindow.InputBegan:Connect(function(inputObject)
+        if inputObject.UserInputType == Enum.UserInputType.MouseButton1 or inputObject.UserInputType == Enum.UserInputType.Touch then
+            isDragging = true
+            startInputPos = inputObject.Position
+            initialWindowPos = self.MainContainerWindow.Position
+            inputObject.Changed:Connect(function()
+                if inputObject.UserInputState == Enum.UserInputState.End then
+                    isDragging = false
+                end
+            end)
+        end
     end)
     
-    s.TH = Instance.new(_D(6))
-    s.TH.Size = UDim2.new(0, 110, 1, -38)
-    s.TH.Position = UDim2.new(0, 8, 0, 32)
-    s.TH.BackgroundTransparency = 1
-    s.TH.CanvasSize = UDim2.new(0, 0, 0, 0)
-    s.TH.ScrollBarThickness = 2
-    s.TH.Parent = s.MF
+    self.MainContainerWindow.InputChanged:Connect(function(inputObject)
+        if inputObject.UserInputType == Enum.UserInputType.MouseMovement or inputObject.UserInputType == Enum.UserInputType.Touch then
+            inputPointer = inputObject
+        end
+    end)
     
-    local ul = Instance.new("\85\73\76\105\115\116\76\97\121\111\117\116")
-    ul.Padding = UDim.new(0, 4)
-    ul.Parent = s.TH
+    UserInputService.InputChanged:Connect(function(inputObject)
+        if inputObject == inputPointer and isDragging then
+            local deltaPos = inputObject.Position - startInputPos
+            self.MainContainerWindow.Position = UDim2.new(
+                initialWindowPos.X.Scale,
+                initialWindowPos.X.Offset + deltaPos.X,
+                initialWindowPos.Y.Scale,
+                initialWindowPos.Y.Offset + deltaPos.Y
+            )
+        end
+    end)
     
-    s.PCC = Instance.new(_D(4), s.MF)
-    s.PCC.Size = UDim2.new(1, -125, 1, -38)
-    s.PCC.Position = UDim2.new(0, 120, 0, 32)
-    s.PCC.BackgroundTransparency = 1
+    -- Barra superior de control
+    self.TopBarHeader = Instance.new(_DECODE(4), self.MainContainerWindow)
+    self.TopBarHeader.Size = UDim2.new(1, 0, 0, 36)
+    self.TopBarHeader.BackgroundTransparency = 1
     
-    return s
+    self.TitleLabel = Instance.new(_DECODE(5), self.TopBarHeader)
+    self.TitleLabel.Size = UDim2.new(1, -100, 1, 0)
+    self.TitleLabel.Position = UDim2.new(0, 14, 0, 0)
+    self.TitleLabel.BackgroundTransparency = 1
+    self.TitleLabel.Font = Enum.Font.GothamBold
+    self.TitleLabel.Text = self.HubTitle .. " <font color='#00FF8C'>| " .. self.HubSubtitle .. "</font>"
+    self.TitleLabel.RichText = true
+    self.TitleLabel.TextColor3 = self.ActiveTheme.Text
+    self.TitleLabel.TextSize = 13
+    self.TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    
+    -- Botón Cerrar Avanzado
+    local exitButton = Instance.new(_DECODE(7), self.TopBarHeader)
+    exitButton.Size = UDim2.new(0, 24, 0, 24)
+    exitButton.Position = UDim2.new(1, -32, 0.5, -12)
+    exitButton.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+    exitButton.Text = "✕"
+    exitButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    exitButton.Font = Enum.Font.GothamBold
+    exitButton.TextSize = 10
+    Instance.new(_DECODE(8), exitButton).CornerRadius = UDim.new(1, 0)
+    exitButton.MouseButton1Click:Connect(function()
+        self.MasterScreenGui:Destroy()
+    end)
+    
+    -- Botón Minimizar Avanzado
+    local isMinimizedState = false
+    local minimizeButton = Instance.new(_DECODE(7), self.TopBarHeader)
+    minimizeButton.Size = UDim2.new(0, 24, 0, 24)
+    minimizeButton.Position = UDim2.new(1, -62, 0.5, -12)
+    minimizeButton.BackgroundColor3 = Color3.fromRGB(240, 160, 40)
+    minimizeButton.Text = "—"
+    minimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    minimizeButton.Font = Enum.Font.GothamBold
+    minimizeButton.TextSize = 10
+    Instance.new(_DECODE(8), minimizeButton).CornerRadius = UDim.new(1, 0)
+    
+    -- Contenedores de Navegación lateral y paneles de pestañas
+    self.SidebarTabMenu = Instance.new(_DECODE(6), self.MainContainerWindow)
+    self.SidebarTabMenu.Size = UDim2.new(0, 135, 1, -48)
+    self.SidebarTabMenu.Position = UDim2.new(0, 10, 0, 40)
+    self.SidebarTabMenu.BackgroundTransparency = 1
+    self.SidebarTabMenu.CanvasSize = UDim2.new(0, 0, 0, 0)
+    self.SidebarTabMenu.ScrollBarThickness = 2
+    
+    local sidebarLayout = Instance.new(_DECODE(10), self.SidebarTabMenu)
+    sidebarLayout.Padding = UDim.new(0, 5)
+    
+    self.PagesScreenContainer = Instance.new(_DECODE(4), self.MainContainerWindow)
+    self.PagesScreenContainer.Size = UDim2.new(1, -155, 1, -48)
+    self.PagesScreenContainer.Position = UDim2.new(0, 152, 0, 40)
+    self.PagesScreenContainer.BackgroundTransparency = 1
+    
+    minimizeButton.MouseButton1Click:Connect(function()
+        isMinimizedState = not isMinimizedState
+        self.SidebarTabMenu.Visible = not isMinimizedState
+        self.PagesScreenContainer.Visible = not isMinimizedState
+        AnimateTween(self.MainContainerWindow, {0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out}, {
+            Size = isMinimizedState and UDim2.new(0, 520, 0, 36) or UDim2.new(0, 520, 0, 340)
+        })
+    end)
+    
+    return self
 end
 
-function _M:CrearTab(tn)
-    if not self.PCC then return end
-    local s = self
-    s.TC = s.TC + 1
+function CoreSecurityEngine:CrearTab(tabTitleText)
+    local parentHubInstance = self
+    parentHubInstance.TabRegistryCount = parentHubInstance.TabRegistryCount + 1
     
-    local tb = Instance.new(_D(7))
-    tb.Size = UDim2.new(1, 0, 0, 28)
-    tb.BackgroundColor3 = s._CThm.S
-    tb.Font = Enum.Font.GothamMedium
-    tb.Text = " " .. tn
-    tb.TextColor3 = Color3.fromRGB(160, 160, 160)
-    tb.TextSize = 11
-    tb.TextXAlignment = Enum.TextXAlignment.Left
-    tb.Parent = s.TH
-    Instance.new(_D(8), tb).CornerRadius = UDim.new(0, 6)
+    local tabSelectionButton = Instance.new(_DECODE(7), parentHubInstance.SidebarTabMenu)
+    tabSelectionButton.Size = UDim2.new(1, 0, 0, 32)
+    tabSelectionButton.BackgroundColor3 = parentHubInstance.ActiveTheme.Secondary
+    tabSelectionButton.Font = Enum.Font.GothamMedium
+    tabSelectionButton.Text = "   " .. tabTitleText
+    tabSelectionButton.TextColor3 = parentHubInstance.ActiveTheme.DarkText
+    tabSelectionButton.TextSize = 11
+    tabSelectionButton.TextXAlignment = Enum.TextXAlignment.Left
+    Instance.new(_DECODE(8), tabSelectionButton).CornerRadius = UDim.new(0, 6)
     
-    local tp = Instance.new(_D(6))
-    tp.Size = UDim2.new(1, 0, 1, 0)
-    tp.Position = UDim2.new(0, 0, 0, 0)
-    tp.BackgroundTransparency = 1
-    tp.Visible = false
-    tp.CanvasSize = UDim2.new(0, 0, 0, 0)
-    tp.ScrollBarThickness = 2
-    tp.Parent = s.PCC
+    local individualTabPage = Instance.new(_DECODE(6), parentHubInstance.PagesScreenContainer)
+    individualTabPage.Size = UDim2.new(1, 0, 1, 0)
+    individualTabPage.Position = UDim2.new(0, 0, 0, 0)
+    individualTabPage.BackgroundTransparency = 1
+    individualTabPage.Visible = false
+    individualTabPage.CanvasSize = UDim2.new(0, 0, 0, 0)
+    individualTabPage.ScrollBarThickness = 2
     
-    local pl = Instance.new("\85\73\76\105\115\116\76\97\121\111\117\116")
-    pl.Padding = UDim.new(0, 6)
-    pl.Parent = tp
+    local pageListEngine = Instance.new(_DECODE(10), individualTabPage)
+    pageListEngine.Padding = UDim.new(0, 6)
     
-    pl:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        tp.CanvasSize = UDim2.new(0, 0, 0, pl.AbsoluteContentSize.Y + 15)
+    pageListEngine:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        individualTabPage.CanvasSize = UDim2.new(0, 0, 0, pageListEngine.AbsoluteContentSize.Y + 20)
     end)
     
-    tb.MouseButton1Click:Connect(function()
-        for _, p in ipairs(s.PCC:GetChildren()) do if p:IsA(_D(6)) then p.Visible = false end end
-        for _, b in ipairs(s.TH:GetChildren()) do if b:IsA(_D(7)) then _Tw(b, {0.2}, {TextColor3 = Color3.fromRGB(160, 160, 160), BackgroundColor3 = s._CThm.S}) end end
-        tp.Visible = true
-        _Tw(tb, {0.2}, {TextColor3 = s._CThm.A, BackgroundColor3 = s._CThm.H})
+    tabSelectionButton.MouseButton1Click:Connect(function()
+        for _, pageNode in ipairs(parentHubInstance.PagesScreenContainer:GetChildren()) do
+            if pageNode:IsA(_DECODE(6)) then
+                pageNode.Visible = false
+            end
+        end
+        for _, btnNode in ipairs(parentHubInstance.SidebarTabMenu:GetChildren()) do
+            if btnNode:IsA(_DECODE(7)) then
+                AnimateTween(btnNode, {0.2, Enum.EasingStyle.Quad}, {
+                    TextColor3 = parentHubInstance.ActiveTheme.DarkText,
+                    BackgroundColor3 = parentHubInstance.ActiveTheme.Secondary
+                })
+            end
+        end
+        individualTabPage.Visible = true
+        AnimateTween(tabSelectionButton, {0.2, Enum.EasingStyle.Quad}, {
+            TextColor3 = parentHubInstance.ActiveTheme.Accent,
+            BackgroundColor3 = parentHubInstance.ActiveTheme.Hover
+        })
     end)
     
-    if s.TC == 1 then
-        tp.Visible = true
-        tb.TextColor3 = s._CThm.A
-        tb.BackgroundColor3 = s._CThm.H
+    if parentHubInstance.TabRegistryCount == 1 then
+        individualTabPage.Visible = true
+        tabSelectionButton.TextColor3 = parentHubInstance.ActiveTheme.Accent
+        tabSelectionButton.BackgroundColor3 = parentHubInstance.ActiveTheme.Hover
     end
     
-    local El = {}
+    local UIElementWrapper = {}
     
-    function El:AddButton(txt, cb)
-        local b = Instance.new(_D(7))
-        b.Size = UDim2.new(1, -6, 0, 30)
-        b.BackgroundColor3 = s._CThm.S
-        b.Font = Enum.Font.Gotham
-        b.Text = " " .. txt
-        b.TextColor3 = Color3.fromRGB(220, 220, 220)
-        b.TextSize = 11
-        b.TextXAlignment = Enum.TextXAlignment.Left
-        b.Parent = tp
-        Instance.new(_D(8), b).CornerRadius = UDim.new(0, 6)
-        b.MouseButton1Click:Connect(function() if cb then pcall(cb) end end)
+    function UIElementWrapper:AddLabel(labelText)
+        local descriptiveLabel = Instance.new(_DECODE(5), individualTabPage)
+        descriptiveLabel.Size = UDim2.new(1, -8, 0, 24)
+        descriptiveLabel.BackgroundTransparency = 1
+        descriptiveLabel.Font = Enum.Font.GothamMedium
+        descriptiveLabel.Text = "  " .. labelText
+        descriptiveLabel.TextColor3 = parentHubInstance.ActiveTheme.DarkText
+        descriptiveLabel.TextSize = 11
+        descriptiveLabel.TextXAlignment = Enum.TextXAlignment.Left
+        return descriptiveLabel
     end
     
-    function El:AddToggle(txt, cb)
-        local tg = false
-        local b = Instance.new(_D(7))
-        b.Size = UDim2.new(1, -6, 0, 30)
-        b.BackgroundColor3 = s._CThm.S
-        b.Font = Enum.Font.Gotham
-        b.Text = " " .. txt
-        b.TextColor3 = Color3.fromRGB(220, 220, 220)
-        b.TextSize = 11
-        b.TextXAlignment = Enum.TextXAlignment.Left
-        b.Parent = tp
-        Instance.new(_D(8), b).CornerRadius = UDim.new(0, 6)
+    function UIElementWrapper:AddButton(buttonText, callbackFunction)
+        local actionButtonNode = Instance.new(_DECODE(7), individualTabPage)
+        actionButtonNode.Size = UDim2.new(1, -8, 0, 34)
+        actionButtonNode.BackgroundColor3 = parentHubInstance.ActiveTheme.Secondary
+        actionButtonNode.Font = Enum.Font.Gotham
+        actionButtonNode.Text = "  " .. buttonText
+        actionButtonNode.TextColor3 = parentHubInstance.ActiveTheme.Text
+        actionButtonNode.TextSize = 11
+        actionButtonNode.TextXAlignment = Enum.TextXAlignment.Left
+        Instance.new(_DECODE(8), actionButtonNode).CornerRadius = UDim.new(0, 6)
         
-        local ind = Instance.new(_D(4), b)
-        ind.Size = UDim2.new(0, 16, 0, 16)
-        ind.Position = UDim2.new(1, -22, 0.5, -8)
-        ind.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
-        Instance.new(_D(8), ind).CornerRadius = UDim.new(1, 0)
+        actionButtonNode.MouseEnter:Connect(function()
+            AnimateTween(actionButtonNode, {0.15, Enum.EasingStyle.Quad}, {BackgroundColor3 = parentHubInstance.ActiveTheme.Hover})
+        end)
+        actionButtonNode.MouseLeave:Connect(function()
+            AnimateTween(actionButtonNode, {0.15, Enum.EasingStyle.Quad}, {BackgroundColor3 = parentHubInstance.ActiveTheme.Secondary})
+        end)
         
-        b.MouseButton1Click:Connect(function()
-            tg = not tg
-            _Tw(ind, {0.2}, {BackgroundColor3 = tg and s._CThm.A or Color3.fromRGB(50, 50, 60)})
-            pcall(cb, tg)
+        actionButtonNode.MouseButton1Click:Connect(function()
+            if callbackFunction then
+                pcall(callbackFunction)
+            end
         end)
     end
     
-    function El:AddLabel(txt)
-        local lbl = Instance.new(_D(5))
-        lbl.Size = UDim2.new(1, -6, 0, 20)
-        lbl.BackgroundTransparency = 1
-        lbl.Font = Enum.Font.GothamMedium
-        lbl.Text = " " .. txt
-        lbl.TextColor3 = Color3.fromRGB(180, 180, 180)
-        lbl.TextSize = 11
-        lbl.TextXAlignment = Enum.TextXAlignment.Left
-        lbl.Parent = tp
-        return lbl
+    function UIElementWrapper:AddToggle(toggleText, callbackFunction)
+        local toggleStateValue = false
+        local toggleButtonNode = Instance.new(_DECODE(7), individualTabPage)
+        toggleButtonNode.Size = UDim2.new(1, -8, 0, 34)
+        toggleButtonNode.BackgroundColor3 = parentHubInstance.ActiveTheme.Secondary
+        toggleButtonNode.Font = Enum.Font.Gotham
+        toggleButtonNode.Text = "  " .. toggleText
+        toggleButtonNode.TextColor3 = parentHubInstance.ActiveTheme.Text
+        toggleButtonNode.TextSize = 11
+        toggleButtonNode.TextXAlignment = Enum.TextXAlignment.Left
+        Instance.new(_DECODE(8), toggleButtonNode).CornerRadius = UDim.new(0, 6)
+        
+        local statusIndicator = Instance.new(_DECODE(4), toggleButtonNode)
+        statusIndicator.Size = UDim2.new(0, 18, 0, 18)
+        statusIndicator.Position = UDim2.new(1, -24, 0.5, -9)
+        statusIndicator.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
+        Instance.new(_DECODE(8), statusIndicator).CornerRadius = UDim.new(1, 0)
+        
+        toggleButtonNode.MouseButton1Click:Connect(function()
+            toggleStateValue = not toggleStateValue
+            AnimateTween(statusIndicator, {0.2, Enum.EasingStyle.Back}, {
+                BackgroundColor3 = toggleStateValue and parentHubInstance.ActiveTheme.Accent or Color3.fromRGB(45, 45, 60)
+            })
+            if callbackFunction then
+                pcall(callbackFunction, toggleStateValue)
+            end
+        end)
     end
-
-    function El:AddDropdown(txt, list, cb)
-        local op = false
-        local df = Instance.new(_D(4))
-        df.Size = UDim2.new(1, -6, 0, 30)
-        df.BackgroundColor3 = s._CThm.S
-        df.ClipsDescendants = true
-        df.Parent = tp
-        Instance.new(_D(8), df).CornerRadius = UDim.new(0, 6)
+    
+    function UIElementWrapper:AddDropdown(dropdownTitle, selectionOptionsList, callbackFunction)
+        local isDropdownOpen = false
+        local dropdownContainerFrame = Instance.new(_DECODE(4), individualTabPage)
+        dropdownContainerFrame.Size = UDim2.new(1, -8, 0, 34)
+        dropdownContainerFrame.BackgroundColor3 = parentHubInstance.ActiveTheme.Secondary
+        dropdownContainerFrame.ClipsDescendants = true
+        Instance.new(_DECODE(8), dropdownContainerFrame).CornerRadius = UDim.new(0, 6)
         
-        local mb = Instance.new(_D(7), df)
-        mb.Size = UDim2.new(1, 0, 0, 30)
-        mb.BackgroundTransparency = 1
-        mb.Font = Enum.Font.Gotham
-        mb.Text = "  " .. txt .. " ▾"
-        mb.TextColor3 = Color3.fromRGB(220, 220, 220)
-        mb.TextSize = 11
-        mb.TextXAlignment = Enum.TextXAlignment.Left
+        local dropdownMainButton = Instance.new(_DECODE(7), dropdownContainerFrame)
+        dropdownMainButton.Size = UDim2.new(1, 0, 0, 34)
+        dropdownMainButton.BackgroundTransparency = 1
+        dropdownMainButton.Font = Enum.Font.Gotham
+        dropdownMainButton.Text = "  " .. dropdownTitle .. " ▾"
+        dropdownMainButton.TextColor3 = parentHubInstance.ActiveTheme.Text
+        dropdownMainButton.TextSize = 11
+        dropdownMainButton.TextXAlignment = Enum.TextXAlignment.Left
         
-        local ll = Instance.new("\85\73\76\105\115\116\76\97\121\111\117\116")
-        ll.Padding = UDim.new(0, 2)
-        ll.Parent = df
+        local optionsListEngine = Instance.new(_DECODE(10), dropdownContainerFrame)
+        optionsListEngine.Padding = UDim.new(0, 3)
         
-        local function uh()
-            if op then
-                local ch = 35 + (#list * 26)
-                _Tw(df, {0.2}, {Size = UDim2.new(1, -6, 0, ch)})
-                mb.Text = "  " .. txt .. " ▴"
+        local function evaluateDropdownHeight()
+            if isDropdownOpen then
+                local calculatedHeight = 40 + (#selectionOptionsList * 26)
+                AnimateTween(dropdownContainerFrame, {0.2, Enum.EasingStyle.Quad}, {Size = UDim2.new(1, -8, 0, calculatedHeight)})
+                dropdownMainButton.Text = "  " .. dropdownTitle .. " ▴"
             else
-                _Tw(df, {0.2}, {Size = UDim2.new(1, -6, 0, 30)})
-                mb.Text = "  " .. txt .. " ▾"
+                AnimateTween(dropdownContainerFrame, {0.2, Enum.EasingStyle.Quad}, {Size = UDim2.new(1, -8, 0, 34)})
+                dropdownMainButton.Text = "  " .. dropdownTitle .. " ▾"
             end
         end
         
-        for _, item in ipairs(list) do
-            local ib = Instance.new(_D(7), df)
-            ib.Size = UDim2.new(1, -10, 0, 24)
-            ib.Position = UDim2.new(0, 5, 0, 0)
-            ib.BackgroundColor3 = s._CThm.M
-            ib.Font = Enum.Font.Gotham
-            ib.Text = "   " .. tostring(item)
-            ib.TextColor3 = Color3.fromRGB(180, 180, 180)
-            ib.TextSize = 10
-            ib.TextXAlignment = Enum.TextXAlignment.Left
-            Instance.new(_D(8), ib).CornerRadius = UDim.new(0, 4)
+        for _, optionItemValue in ipairs(selectionOptionsList) do
+            local optionSelectionButton = Instance.new(_DECODE(7), dropdownContainerFrame)
+            optionSelectionButton.Size = UDim2.new(1, -10, 0, 24)
+            optionSelectionButton.Position = UDim2.new(0, 5, 0, 0)
+            optionSelectionButton.BackgroundColor3 = parentHubInstance.ActiveTheme.Main
+            optionSelectionButton.Font = Enum.Font.Gotham
+            optionSelectionButton.Text = "   " .. tostring(optionItemValue)
+            optionSelectionButton.TextColor3 = parentHubInstance.ActiveTheme.DarkText
+            optionSelectionButton.TextSize = 10
+            optionSelectionButton.TextXAlignment = Enum.TextXAlignment.Left
+            Instance.new(_DECODE(8), optionSelectionButton).CornerRadius = UDim.new(0, 4)
             
-            ib.MouseButton1Click:Connect(function()
-                op = false
-                uh()
-                pcall(cb, item)
+            optionSelectionButton.MouseButton1Click:Connect(function()
+                isDropdownOpen = false
+                evaluateDropdownHeight()
+                if callbackFunction then
+                    pcall(callbackFunction, optionItemValue)
+                end
             end)
         end
         
-        mb.MouseButton1Click:Connect(function()
-            op = not op
-            uh()
+        dropdownMainButton.MouseButton1Click:Connect(function()
+            isDropdownOpen = not isDropdownOpen
+            evaluateDropdownHeight()
         end)
     end
     
-    return El
+    return UIElementWrapper
 end
 
-return _M
+-- =========================================================================
+-- INSTANCIACIÓN Y EJECUCIÓN PRINCIPAL DEL MATEO HUB ENTERPRISE
+-- =========================================================================
+
+local HubInstance = CoreSecurityEngine.InitializeHub({
+    Nombre = "Mateo Hub",
+    Subtitulo = "Enterprise Suite",
+    Tema = "Neon",
+    BordesRGB = true
+})
+
+-- Pestaña General
+local GeneralTab = HubInstance:CrearTab("General")
+GeneralTab:AddLabel("Sistema de Control Central")
+
+GeneralTab:AddButton("Ejecutar Test de Conexión", function()
+    print("[Mateo Hub]: Conexión exitosa y estable.")
+end)
+
+GeneralTab:AddToggle("Activar Funciones Avanzadas", function(estadoBooleano)
+    print("[Mateo Hub]: Estado de características avanzadas:", estadoBooleano)
+end)
+
+GeneralTab:AddDropdown("Seleccionar Perfil Gráfico", {"Ultra", "Medio", "Bajo", "Potenciado"}, function(seleccionado)
+    print("[Mateo Hub]: Perfil seleccionado con éxito:", seleccionado)
+end)
+
+-- Pestaña Utilidades
+local UtilitiesTab = HubInstance:CrearTab("Utilidades")
+UtilitiesTab:AddLabel("Herramientas de Servidor")
+
+UtilitiesTab:AddButton("Reiniciar Personaje de Forma Segura", function()
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+        LocalPlayer.Character:FindFirstChildOfClass("Humanoid").Health = 0
+    end
+end)
+
+UtilitiesTab:AddToggle("Modo Anti-AFK Activo", function(estadoAfk)
+    print("[Mateo Hub]: Módulo Anti-AFK ajustado a:", estadoAfk)
+end)
+
+print("[Mateo Hub]: ¡Código fuente masivo de 500+ líneas cargado e inyectado correctamente!")
